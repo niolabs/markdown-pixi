@@ -29,7 +29,7 @@ function wrap(text, style, canvas = PIXI.TextMetrics._canvas) {
         const wordWidthWithSpace = wordWidth + spaceWidth;
 
         if (j === 0 && wordWidthWithSpace > spaceLeft && !allowLonger) {
-          return ['', 0, spaceLeft, lineHeight, fontProperties, true];
+          return ['', 0, spaceLeft, lineHeight, fontProperties, false];
         } else if (j === 0 || wordWidthWithSpace > spaceLeft) {
           // Skip printing the newline if it's the first word of the line that is
           // greater than the word wrap width.
@@ -123,8 +123,9 @@ const renderText = (text, target, style, top, left, indent = 0) => {
   console.log("rendering: '%s'", text, indent)
   const lines = wrap(text, style);
   let lineNum = 0;
-  while (true) {
-    const [line, width, remaining, lineHeight, _, end] = lines.next(lineNum === 0 ? indent : undefined, lineNum !== 0);
+  let cap = 100000;
+  while (true && cap-- >= 0) {
+    const [line, width, remaining, lineHeight, _, end] = lines.next(lineNum === 0 ? indent : undefined, lineNum !== 0 && indent === 0);
     if (line.length) {
       const txt = new PIXI.Text(line, style);
       txt.y = top;
@@ -137,6 +138,7 @@ const renderText = (text, target, style, top, left, indent = 0) => {
     top += lineHeight
     lineNum++;
   }
+  throw new Error('possible infinite loop')
 
 }
 
@@ -186,7 +188,6 @@ const style = new PIXI.TextStyle({
   fontFamily: "Lato",
   fontWeight: '200',
   fontSize: '13px',
-  wordWrap: true,
   wordWrapWidth: 200,
   leading: 0,
   fill: 0x333333,
