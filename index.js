@@ -123,8 +123,8 @@ const renderText = (text, target, style, top, left, indent = 0) => {
   console.log("rendering: '%s'", text, indent)
   const lines = wrap(text, style);
   let lineNum = 0;
-  let cap = 100000;
-  while (true && cap-- >= 0) {
+  let abort = 100000;
+  while (true && ((--abort) >= 0)) {
     const [line, width, remaining, lineHeight, _, end] = lines.next(lineNum === 0 ? indent : undefined, lineNum !== 0 && indent === 0);
     if (line.length) {
       const txt = new PIXI.Text(line, style);
