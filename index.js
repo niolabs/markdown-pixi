@@ -79,6 +79,8 @@ this **is a really long bolded \`part\` that should wrap at some** point then sw
 do paragraphs still work?
 
 okay *i think* i may have gotten it and wrapping in the right spot
+
+ok **what** about *this* all \`on\` one line and then wrap
 `
 
 const getStyle = (baseStyle, elem, props) => {
