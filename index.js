@@ -7,8 +7,7 @@ function wrap(text, style, canvas = PIXI.TextMetrics._canvas) {
 
   const lineHeight = style.lineHeight || fontProperties.fontSize + style.strokeThickness;
 
-  const spaceWidth = context.measureText(' ').width
-    + style.letterSpacing;
+  const spaceWidth = context.measureText(' ').width + style.letterSpacing;
 
   return {
     next(indent = 0, allowLonger = true) {
@@ -17,11 +16,9 @@ function wrap(text, style, canvas = PIXI.TextMetrics._canvas) {
       // Greedy wrapping algorithm that will wrap words as the line grows longer
       // than its horizontal bounds.
       let result = '';
-      const firstChar = text.charAt(0);
-      const firstLine = text.split('\n', 1)[0];
 
       let spaceLeft = wordWrapWidth;
-      const words = firstLine.split(' ');
+      const words = text.split('\n', 1)[0].split(' ');
 
       for (let j = 0; j < words.length; j++) {
         const wordWidth = context.measureText(words[j]).width
@@ -29,6 +26,7 @@ function wrap(text, style, canvas = PIXI.TextMetrics._canvas) {
         const wordWidthWithSpace = wordWidth + spaceWidth;
 
         if (j === 0 && wordWidthWithSpace > spaceLeft && !allowLonger) {
+          // Don't allow indented first-words to overflow.
           return ['', 0, spaceLeft, lineHeight, fontProperties, false];
         } else if (j === 0 || wordWidthWithSpace > spaceLeft) {
           // Skip printing the newline if it's the first word of the line that is
