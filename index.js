@@ -74,9 +74,9 @@ const content = `
 # This is a test
 this **is a really long bolded \`part\` that should wrap at some** point then switch back
 
-do paragraphs still work?
-
-okay *i think* i may have gotten it and wrapping in the right spot
+> do paragraphs still work?
+>
+> okay *i think* i may have gotten it and wrapping in the right spot
 
 ok **what** about *this* all \`on\` one line and then wrap
 `
@@ -117,32 +117,35 @@ const nodeIsBlock = elem => (
   elem === "blockquote" ||
   elem === "code_block"
 );
+
 const nodeIsInline = elem => !nodeIsBlock(elem)
 
-const renderText = (text, target, style, top, left, indent = 0) => {
-  console.log("rendering: '%s'", text, indent)
+const renderText = (text, style, target, top, left, indent) => {
   const lines = wrap(text, style);
   let lineNum = 0;
   let abort = 100000;
   while (true && ((--abort) >= 0)) {
-    const [line, width, remaining, lineHeight, _, end] = lines.next(lineNum === 0 ? indent : undefined, lineNum !== 0 && indent === 0);
+    const [line, width, remaining, lineHeight, _, end] = lines.next(lineNum === 0 ? indent : left, lineNum !== 0 && indent === 0);
+
     if (line.length) {
       const txt = new PIXI.Text(line, style);
       txt.y = top;
       txt.x = lineNum === 0 ? indent : left;
       target.addChild(txt);
     }
+
     if (end) {
-      return [top, (lineNum === 0 ? indent : 0) + Math.round(width)]
+      return [top, left, (lineNum === 0 ? indent : left) + Math.round(width)]
     }
+
     top += lineHeight
     lineNum++;
   }
-  throw new Error('possible infinite loop')
 
+  throw new Error('possible infinite loop')
 }
 
-const renderNode = (node, target, baseStyle, iTop = 0, iLeft = 0, indent =0 ) => {
+const renderNode = (node, baseStyle, target, iTop = 0, iLeft = 0, indent = 0) => {
   let top = iTop, left = iLeft;
   const [elem, ...rest] = node;
 
@@ -152,28 +155,34 @@ const renderNode = (node, target, baseStyle, iTop = 0, iLeft = 0, indent =0 ) =>
 
   const style = getStyle(baseStyle, elem, props);
 
+  switch (elem) {
+    case "blockquote":
+      left += 20;
+      indent += 20
+  }
+
   for (let i = 0; i < rest.length; i++) {
     const child = rest[i];
     const render = Array.isArray(child) ? renderNode : renderText
-    const [nTop, nIndent] = render(child, target, style, top, left, indent)
+    const [nTop, nLeft, nIndent] = render(child, style, target, top, left, indent)
     top = nTop
+    left = nLeft
     indent = nIndent
   }
 
   if (nodeIsBlock(elem)) {
     top += 14 + 10;
-    indent = 0;
+    indent = iLeft;
     left = iLeft;
   }
 
-  return [top, indent];
+  return [top, left, indent];
 };
 
 const renderMarkdown = (md, style, renderer) => {
   const target = new PIXI.Container();
   const jsonml = markdown.parse(md)
-  console.log(JSON.stringify(jsonml, null, 2))
-  const [height] = renderNode(jsonml, target, style, 0);
+  const [height] = renderNode(jsonml, style, target, 0, 0, 0);
   if (height === 0) { return PIXI.Texture.EMPTY; }
   const texture = PIXI.RenderTexture.create(
     style.wordWrapWidth, height,
