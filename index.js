@@ -57,30 +57,6 @@ function wrap(text, style, canvas = PIXI.TextMetrics._canvas) {
   }
 }
 
-console.clear()
-const app = new PIXI.Application({
-  width: 300,
-  height: 1500,
-  backgroundColor: 0xffffff,
-  antialias: true,
-  view: document.getElementById("stage"),
-  resolution: 1,
-  powerPrefernce: "low-performance",
-});
-
-document.getElementById("stage").style.width = `${300}px`;
-
-const content = `
-# This is a test
-this **is a really long bolded \`part\` that should wrap at some** point then switch back
-
-> do paragraphs still work?
->
-> okay *i think* i may have gotten it and wrapping in the right spot
-
-ok **what** about *this* all \`on\` one line and then wrap
-`
-
 const getStyle = (baseStyle, elem, props) => {
   switch(elem) {
     case "em": {
@@ -103,7 +79,7 @@ const getStyle = (baseStyle, elem, props) => {
     case "inlinecode": {
       const style = baseStyle.clone();
       style.fontFamily = "Fira Mono"
-      style.fontSize = '14px'
+      style.fontSize = '22px'
       return style;
     }
   }
@@ -120,22 +96,24 @@ const nodeIsBlock = elem => (
 
 const nodeIsInline = elem => !nodeIsBlock(elem)
 
-const renderText = (text, style, target, top, left, indent) => {
+const typesetText = (text, style, forme, top, left, indent) => {
   const lines = wrap(text, style);
   let lineNum = 0;
   let abort = 100000;
   while (true && ((--abort) >= 0)) {
-    const [line, width, remaining, lineHeight, _, end] = lines.next(lineNum === 0 ? indent : left, lineNum !== 0 && indent === 0);
+    const sLeft = lineNum === 0 ? indent : left;
+    const allowLonger = lineNum === 0 && indent === left;
+    const [line, width, remaining, lineHeight, metrics, end] = lines.next(sLeft, allowLonger);
 
     if (line.length) {
-      const txt = new PIXI.Text(line, style);
-      txt.y = top;
-      txt.x = lineNum === 0 ? indent : left;
-      target.addChild(txt);
+      const appendPrevious = (lineNum === 0 && !(indent === left));
+      const formeLine = (appendPrevious ? forme : (forme.push([]), forme))[forme.length - 1];
+      const tLeft = lineNum === 0 ? indent : left;
+      formeLine.push([line, tLeft, style, metrics])
     }
 
     if (end) {
-      return [top, left, (lineNum === 0 ? indent : left) + Math.round(width)]
+      return [forme, top, left, (lineNum === 0 ? indent : left) + Math.round(width)]
     }
 
     top += lineHeight
@@ -145,7 +123,7 @@ const renderText = (text, style, target, top, left, indent) => {
   throw new Error('possible infinite loop')
 }
 
-const renderNode = (node, baseStyle, target, iTop = 0, iLeft = 0, indent = 0) => {
+const typesetNode = (node, baseStyle, forme = [], iTop, iLeft, indent) => {
   let top = iTop, left = iLeft;
   const [elem, ...rest] = node;
 
@@ -163,26 +141,48 @@ const renderNode = (node, baseStyle, target, iTop = 0, iLeft = 0, indent = 0) =>
 
   for (let i = 0; i < rest.length; i++) {
     const child = rest[i];
-    const render = Array.isArray(child) ? renderNode : renderText
-    const [nTop, nLeft, nIndent] = render(child, style, target, top, left, indent)
+    const render = Array.isArray(child) ? typesetNode : typesetText
+    const [_, nTop, nLeft, nIndent] = render(child, style, forme, top, left, indent)
     top = nTop
     left = nLeft
     indent = nIndent
   }
 
   if (nodeIsBlock(elem)) {
-    top += 14 + 10;
     indent = iLeft;
     left = iLeft;
   }
 
-  return [top, left, indent];
+  return [forme, top, left, indent];
 };
 
-const renderMarkdown = (md, style, renderer) => {
+const typesetMarkdown = (node, baseStyle, forme = []) => {
+  typesetNode(node, baseStyle, forme, 0, 0, 0);
+  return [forme];
+}
+
+const press = (forme) => {
   const target = new PIXI.Container();
+  let top = 0;
+  forme.forEach((line) => {
+    const lh = line.reduce((max, [_a, _b, _c, { ascent, descent }]) => Math.max(max, ascent + descent), 0);
+    const baseline = line.reduce((max, [_a, _b, _c, { ascent }]) => Math.max(max, ascent), 0);
+    console.log(baseline);
+    line.forEach(([text, left, style, metrics]) => {
+      const txt = new PIXI.Text(text, style);
+      txt.y = Math.round(top + (baseline - metrics.ascent));
+      txt.x = Math.round(left);
+      target.addChild(txt);
+    });
+    top += lh;
+  })
+  return [target, top];
+}
+
+const renderMarkdown = (md, style, renderer) => {
   const jsonml = markdown.parse(md)
-  const [height] = renderNode(jsonml, style, target, 0, 0, 0);
+  const [forme] = typesetMarkdown(jsonml, style);
+  const [target, height] = press(forme);
   if (height === 0) { return PIXI.Texture.EMPTY; }
   const texture = PIXI.RenderTexture.create(
     style.wordWrapWidth, height,
@@ -192,6 +192,31 @@ const renderMarkdown = (md, style, renderer) => {
   renderer.render(target, texture);
   return texture;
 };
+
+console.clear()
+const app = new PIXI.Application({
+  width: 300,
+  height: 1500,
+  backgroundColor: 0xffffff,
+  antialias: true,
+  view: document.getElementById("stage"),
+  resolution: 2,
+  powerPrefernce: "low-performance",
+});
+
+document.getElementById("stage").style.width = `${300}px`;
+
+const content = `
+# This is a test
+this **is a really long bolded \`part\` that should wrap at some** point then switch back
+
+> do paragraphs still work?
+>
+> okay *i think* i may have gotten it and wrapping in the right spot
+
+ok **what** about *this* all \`on\` one line and then wrap
+`
+
 
 const style = new PIXI.TextStyle({
   fontFamily: "Lato",
