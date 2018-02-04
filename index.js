@@ -96,7 +96,7 @@ const nodeIsBlock = elem => (
 
 const nodeIsInline = elem => !nodeIsBlock(elem)
 
-const typesetText = (text, style, forme, top, left, indent) => {
+const typesetText = (text, style, forme, left, indent) => {
   const lines = wrap(text, style);
   let lineNum = 0;
   let abort = 100000;
@@ -113,18 +113,17 @@ const typesetText = (text, style, forme, top, left, indent) => {
     }
 
     if (end) {
-      return [forme, top, left, (lineNum === 0 ? indent : left) + Math.round(width)]
+      return [forme, left, (lineNum === 0 ? indent : left) + Math.round(width)]
     }
 
-    top += lineHeight
     lineNum++;
   }
 
   throw new Error('possible infinite loop')
 }
 
-const typesetNode = (node, baseStyle, forme = [], iTop, iLeft, indent) => {
-  let top = iTop, left = iLeft;
+const typesetNode = (node, baseStyle, forme = [], iLeft, indent) => {
+  let left = iLeft;
   const [elem, ...rest] = node;
 
   const props = (
@@ -141,9 +140,8 @@ const typesetNode = (node, baseStyle, forme = [], iTop, iLeft, indent) => {
 
   for (let i = 0; i < rest.length; i++) {
     const child = rest[i];
-    const render = Array.isArray(child) ? typesetNode : typesetText
-    const [_, nTop, nLeft, nIndent] = render(child, style, forme, top, left, indent)
-    top = nTop
+    const typeset = Array.isArray(child) ? typesetNode : typesetText
+    const [_, nLeft, nIndent] = typeset(child, style, forme, left, indent)
     left = nLeft
     indent = nIndent
   }
@@ -153,11 +151,11 @@ const typesetNode = (node, baseStyle, forme = [], iTop, iLeft, indent) => {
     left = iLeft;
   }
 
-  return [forme, top, left, indent];
+  return [forme, left, indent];
 };
 
 const typesetMarkdown = (node, baseStyle, forme = []) => {
-  typesetNode(node, baseStyle, forme, 0, 0, 0);
+  typesetNode(node, baseStyle, forme, 0, 0);
   return [forme];
 }
 
@@ -167,6 +165,7 @@ const press = (forme) => {
   forme.forEach((line) => {
     const lh = line.reduce((max, [_a, _b, _c, { ascent, descent }]) => Math.max(max, ascent + descent), 0);
     const baseline = line.reduce((max, [_a, _b, _c, { ascent }]) => Math.max(max, ascent), 0);
+    const leading = line.reduce((max, [_a, _b, { leading = 0 }]) => Math.max(max, leading), 0);
     console.log(baseline);
     line.forEach(([text, left, style, metrics]) => {
       const txt = new PIXI.Text(text, style);
@@ -174,7 +173,7 @@ const press = (forme) => {
       txt.x = Math.round(left);
       target.addChild(txt);
     });
-    top += lh;
+    top += lh + leading;
   })
   return [target, top];
 }
@@ -223,7 +222,7 @@ const style = new PIXI.TextStyle({
   fontWeight: '200',
   fontSize: '13px',
   wordWrapWidth: 200,
-  leading: 0,
+  leading: 5,
   fill: 0x333333,
 });
 
