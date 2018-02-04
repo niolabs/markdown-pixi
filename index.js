@@ -79,7 +79,6 @@ const getStyle = (baseStyle, elem, props) => {
     case "inlinecode": {
       const style = baseStyle.clone();
       style.fontFamily = "Fira Mono"
-      style.fontSize = '22px'
       return style;
     }
   }
@@ -119,7 +118,7 @@ const typesetText = (text, style, forme, left, indent) => {
     lineNum++;
   }
 
-  throw new Error('possible infinite loop')
+  throw new Error('possible infinite loop... too many lines iterated')
 }
 
 const typesetNode = (node, baseStyle, forme = [], iLeft, indent) => {
@@ -149,6 +148,9 @@ const typesetNode = (node, baseStyle, forme = [], iLeft, indent) => {
   if (nodeIsBlock(elem)) {
     indent = iLeft;
     left = iLeft;
+    forme.push([
+      [undefined, 0, style, { ascent: 7, descent: 0, fontSize: 7 }]
+    ]);
   }
 
   return [forme, left, indent];
@@ -168,10 +170,12 @@ const press = (forme) => {
     const leading = line.reduce((max, [_a, _b, { leading = 0 }]) => Math.max(max, leading), 0);
     console.log(baseline);
     line.forEach(([text, left, style, metrics]) => {
-      const txt = new PIXI.Text(text, style);
-      txt.y = Math.round(top + (baseline - metrics.ascent));
-      txt.x = Math.round(left);
-      target.addChild(txt);
+      if (text) {
+        const txt = new PIXI.Text(text, style);
+        txt.y = Math.round(top + (baseline - metrics.ascent));
+        txt.x = Math.round(left);
+        target.addChild(txt);
+      }
     });
     top += lh + leading;
   })
@@ -214,6 +218,10 @@ this **is a really long bolded \`part\` that should wrap at some** point then sw
 > okay *i think* i may have gotten it and wrapping in the right spot
 
 ok **what** about *this* all \`on\` one line and then wrap
+
+\`\`\`
+This is some code_block
+\`\`\`
 `
 
 
