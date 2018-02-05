@@ -57,34 +57,6 @@ function wrap(text, style, canvas = PIXI.TextMetrics._canvas) {
   }
 }
 
-const getStyle = (baseStyle, elem, props) => {
-  switch(elem) {
-    case "em": {
-      const style = baseStyle.clone();
-      style.fontStyle = "italic"
-      return style;
-    }
-    case "strong": {
-      const style = baseStyle.clone();
-      style.fontWeight = "bold"
-      return style;
-    }
-    case "header": {
-      const style = baseStyle.clone();
-      style.fontWeight = "bold";
-      style.fontSize = [undefined, '32px', '24px', '18px', '14px', '12px', '10px'][props.level] || style.fontSize;
-      return style;
-    }
-    case "code_block":
-    case "inlinecode": {
-      const style = baseStyle.clone();
-      style.fontFamily = "Fira Mono"
-      return style;
-    }
-  }
-  return baseStyle;
-}
-
 const nodeIsBlock = elem => (
   elem === "para" ||
   elem === "header" ||
@@ -95,11 +67,11 @@ const nodeIsBlock = elem => (
 
 const nodeIsInline = elem => !nodeIsBlock(elem)
 
-const typesetText = (text, style, forme, left, indent) => {
+const typesetText = (text, style, options, forme, left, indent) => {
   const lines = wrap(text, style);
   let lineNum = 0;
-  let abort = 100000;
-  while (true && ((--abort) >= 0)) {
+  let doNotGetStuckInInfiniteLoop = 100000;
+  while ((--doNotGetStuckInInfiniteLoop) >= 0) {
     const sLeft = lineNum === 0 ? indent : left;
     const allowLonger = lineNum === 0 && indent === left;
     const [line, width, remaining, lineHeight, metrics, end] = lines.next(sLeft, allowLonger);
@@ -121,7 +93,7 @@ const typesetText = (text, style, forme, left, indent) => {
   throw new Error('possible infinite loop... too many lines iterated')
 }
 
-const typesetNode = (node, baseStyle, forme = [], iLeft, indent) => {
+const typesetNode = (node, baseStyle, options, forme = [], iLeft, indent) => {
   let left = iLeft;
   const [elem, ...rest] = node;
 
@@ -129,21 +101,22 @@ const typesetNode = (node, baseStyle, forme = [], iLeft, indent) => {
     typeof rest[0] === "object" && !Array.isArray(rest[0])
   ) ? rest.shift() : {};
 
-  const style = getStyle(baseStyle, elem, props);
+  const style = options.getStyle(baseStyle, elem, props);
 
   switch (elem) {
-    case "blockquote":
+    case "blockquote": {
       left += 20;
       indent += 20
+      break;
+    }
   }
 
-  for (let i = 0; i < rest.length; i++) {
-    const child = rest[i];
+  rest.forEach((child) => {
     const typeset = Array.isArray(child) ? typesetNode : typesetText
-    const [_, nLeft, nIndent] = typeset(child, style, forme, left, indent)
+    const [_, nLeft, nIndent] = typeset(child, style, options, forme, left, indent)
     left = nLeft
     indent = nIndent
-  }
+  });
 
   if (nodeIsBlock(elem)) {
     indent = iLeft;
@@ -156,8 +129,8 @@ const typesetNode = (node, baseStyle, forme = [], iLeft, indent) => {
   return [forme, left, indent];
 };
 
-const typesetMarkdown = (node, baseStyle, forme = []) => {
-  typesetNode(node, baseStyle, forme, 0, 0);
+const typesetMarkdown = (node, style, options, forme = []) => {
+  typesetNode(node, style, options, forme, 0, 0);
   return [forme];
 }
 
@@ -168,7 +141,6 @@ const press = (forme) => {
     const lh = line.reduce((max, [_a, _b, _c, { ascent, descent }]) => Math.max(max, ascent + descent), 0);
     const baseline = line.reduce((max, [_a, _b, _c, { ascent }]) => Math.max(max, ascent), 0);
     const leading = line.reduce((max, [_a, _b, { leading = 0 }]) => Math.max(max, leading), 0);
-    console.log(baseline);
     line.forEach(([text, left, style, metrics]) => {
       if (text) {
         const txt = new PIXI.Text(text, style);
@@ -182,9 +154,14 @@ const press = (forme) => {
   return [target, top];
 }
 
-const renderMarkdown = (md, style, renderer) => {
+const renderMarkdown = (md, style, options = {}) => {
+  const {
+    renderer = (() => { throw new Error('renderer is required') })(),
+    getStyle = style => style,
+  } = options;
+
   const jsonml = markdown.parse(md)
-  const [forme] = typesetMarkdown(jsonml, style);
+  const [forme] = typesetMarkdown(jsonml, style, { getStyle });
   const [target, height] = press(forme);
   if (height === 0) { return PIXI.Texture.EMPTY; }
   const texture = PIXI.RenderTexture.create(
@@ -234,7 +211,37 @@ const style = new PIXI.TextStyle({
   fill: 0x333333,
 });
 
-const texture = renderMarkdown(content, style, app.renderer)
+const texture = renderMarkdown(content, style, {
+  renderer: app.renderer,
+  getStyle: (baseStyle, elem, props) => {
+    switch(elem) {
+      case "em": {
+        const style = baseStyle.clone();
+        style.fontStyle = "italic"
+        return style;
+      }
+      case "strong": {
+        const style = baseStyle.clone();
+        style.fontWeight = "bold"
+        return style;
+      }
+      case "header": {
+        const style = baseStyle.clone();
+        style.fontWeight = "bold";
+        style.fontSize = [undefined, '32px', '24px', '18px', '14px', '12px', '10px'][props.level] || style.fontSize;
+        return style;
+      }
+      case "code_block":
+      case "inlinecode": {
+        const style = baseStyle.clone();
+        style.fontFamily = "Fira Mono"
+        return style;
+      }
+    }
+    return baseStyle;
+  }
+});
+
 const sprite = new PIXI.Sprite(texture);
 const gfx = new PIXI.Graphics();
 gfx.lineStyle(1, 0, 1)
