@@ -199,7 +199,7 @@ export function renderMarkdownToTexture(md, style, options = {}) {
   if (height === 0) { return Texture.EMPTY; }
   const texture = RenderTexture.create(
     style.wordWrapWidth, height,
-    SCALE_MODE.LINEAR,
+    SCALE_MODES.LINEAR,
     renderer.resolution,
   );
   renderer.render(target, texture);
