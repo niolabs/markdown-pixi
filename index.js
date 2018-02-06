@@ -62,12 +62,13 @@ const nodeIsBlock = elem => (
   elem === "header" ||
   elem === "hr" ||
   elem === "blockquote" ||
-  elem === "code_block"
+  elem === "code_block" ||
+  elem === 'listitem'
 );
 
 const nodeIsInline = elem => !nodeIsBlock(elem)
 
-const typesetText = (text, style, options, forme, left, indent) => {
+const typesetTextPlain = (text, style, options, forme, left, indent) => {
   const lines = wrap(text, style);
   let lineNum = 0;
   let doNotGetStuckInInfiniteLoop = 100000;
@@ -93,6 +94,10 @@ const typesetText = (text, style, options, forme, left, indent) => {
   throw new Error('possible infinite loop... too many lines iterated')
 }
 
+const typesetText = (text, style, options, forme, left, indent) => (
+  typesetTextPlain(text.replace(/(?:\n|\r|\r\n| {2,})/g, ' '), style, options, forme, left, indent)
+);
+
 const typesetNode = (node, baseStyle, options, forme = [], iLeft, indent) => {
   let left = iLeft;
   const [elem, ...rest] = node;
@@ -106,13 +111,26 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, indent) => {
   switch (elem) {
     case "blockquote": {
       left += 20;
-      indent += 20
+      indent += 20;
+      break;
+    }
+    case "code_block": {
+      left += 10;
+      indent += 10;
+      break;
+    }
+    case "listitem": {
+      left += 20;
+      indent += 20;
       break;
     }
   }
 
   rest.forEach((child) => {
-    const typeset = Array.isArray(child) ? typesetNode : typesetText
+    const typeset = Array.isArray(child) ? typesetNode
+      : elem === 'code_block' ? typesetTextPlain
+      : elem === 'inlinecode' ? typesetTextPlain
+      : typesetText
     const [_, nLeft, nIndent] = typeset(child, style, options, forme, left, indent)
     left = nLeft
     indent = nIndent
@@ -121,9 +139,11 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, indent) => {
   if (nodeIsBlock(elem)) {
     indent = iLeft;
     left = iLeft;
-    forme.push([
-      [undefined, 0, style, { ascent: 7, descent: 0, fontSize: 7 }]
-    ]);
+    if (forme.length > 0 && forme[forme.length - 1][0][0] !== undefined) {
+      forme.push([
+        [undefined, 0, style, { ascent: 7, descent: 0, fontSize: 7 }]
+      ]);
+    }
   }
 
   return [forme, left, indent];
@@ -161,6 +181,7 @@ const renderMarkdown = (md, style, options = {}) => {
   } = options;
 
   const jsonml = markdown.parse(md)
+  console.log(jsonml)
   const [forme] = typesetMarkdown(jsonml, style, { getStyle });
   const [target, height] = press(forme);
   if (height === 0) { return PIXI.Texture.EMPTY; }
@@ -173,9 +194,11 @@ const renderMarkdown = (md, style, options = {}) => {
   return texture;
 };
 
+// -------------------
+
 console.clear()
 const app = new PIXI.Application({
-  width: 300,
+  width: 450,
   height: 1500,
   backgroundColor: 0xffffff,
   antialias: true,
@@ -184,21 +207,50 @@ const app = new PIXI.Application({
   powerPrefernce: "low-performance",
 });
 
-document.getElementById("stage").style.width = `${300}px`;
+document.getElementById("stage").style.width = `${450}px`;
 
 const content = `
-# This is a test
-this **is a really long bolded \`part\` that should wrap at some** point then switch back
+An h1 header
+============
 
-> do paragraphs still work?
+Paragraphs are                        separated by a blank line.
+
+2nd paragraph. *Italic*, **bold**, and \`monospace\`. Itemized lists
+look like:
+
+  * this one
+  * that one
+  * the other one
+
+Note that --- not considering the asterisk --- the actual text
+content starts at 4-columns in.
+
+> Block quotes are
+> written like so.
 >
-> okay *i think* i may have gotten it and wrapping in the right spot
+> They can span multiple paragraphs,
+> if you like.
 
-ok **what** about *this* all \`on\` one line and then wrap
+Use 3 dashes for an em-dash. Use 2 dashes for ranges (ex., "it's all
+in chapters 12--14"). Three dots ... will be converted to an ellipsis.
+Unicode is supported. ☺
 
-\`\`\`
-This is some code_block
-\`\`\`
+
+
+An h2 header
+------------
+
+Here's a numbered list:
+
+ 1. first item
+ 2. second item
+ 3. third item
+
+Note again how the actual text starts at 4 columns in (4 characters
+from the left side). Here's a code sample:
+
+    # Let me re-iterate ...
+    for i in 1 .. 10 { do-something(i) }
 `
 
 
@@ -206,7 +258,7 @@ const style = new PIXI.TextStyle({
   fontFamily: "Lato",
   fontWeight: '200',
   fontSize: '13px',
-  wordWrapWidth: 200,
+  wordWrapWidth: 420,
   leading: 5,
   fill: 0x333333,
 });
@@ -245,8 +297,8 @@ const texture = renderMarkdown(content, style, {
 const sprite = new PIXI.Sprite(texture);
 const gfx = new PIXI.Graphics();
 gfx.lineStyle(1, 0, 1)
-gfx.moveTo(200, 0);
-gfx.lineTo(200, 1000);
+gfx.moveTo(420, 0);
+gfx.lineTo(420, 1000);
 
 app.stage.addChild(gfx);
 app.stage.addChild(sprite)
