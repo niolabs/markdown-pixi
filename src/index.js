@@ -5,12 +5,15 @@ import {
   Text,
   TextMetrics,
   Texture,
-} from 'pixi.js';
+} from 'pixi.js'; // eslint-disable-line import/no-unresolved, import/extensions
+
 
 import { markdown } from 'markdown';
 
 // Adapted from TextMetrics#wrap
-function wrap(text, style, canvas = TextMetrics._canvas) {
+// eslint-disable-next-line no-underscore-dangle
+function wrap(iText, style, canvas = TextMetrics._canvas) {
+  let text = iText;
   const context = canvas.getContext('2d');
 
   const font = style.toFontString();
@@ -32,7 +35,7 @@ function wrap(text, style, canvas = TextMetrics._canvas) {
       let spaceLeft = wordWrapWidth;
       const words = text.split('\n', 1)[0].split(' ');
 
-      for (let j = 0; j < words.length; j++) {
+      for (let j = 0; j < words.length; j += 1) {
         const wordWidth = context.measureText(words[j]).width
           + ((words[j].length - 1) * style.letterSpacing);
         const wordWidthWithSpace = wordWidth + spaceWidth;
@@ -78,16 +81,14 @@ const nodeIsBlock = elem => (
   elem === 'listitem'
 );
 
-const nodeIsInline = elem => !nodeIsBlock(elem);
-
 const typesetTextPlain = (text, style, options, forme, left, indent) => {
   const lines = wrap(text, style);
   let lineNum = 0;
   let doNotGetStuckInInfiniteLoop = 100000;
-  while ((--doNotGetStuckInInfiniteLoop) >= 0) {
+  do {
     const sLeft = lineNum === 0 ? indent : left;
     const allowLonger = lineNum === 0 && indent === left;
-    const [line, width, remaining, lineHeight, metrics, end] = lines.next(sLeft, allowLonger);
+    const [line, width, , , metrics, end] = lines.next(sLeft, allowLonger);
 
     if (line.length) {
       const appendPrevious = (lineNum === 0 && !(indent === left));
@@ -98,8 +99,9 @@ const typesetTextPlain = (text, style, options, forme, left, indent) => {
 
     if (end) { return [left, (lineNum === 0 ? indent : left) + Math.round(width)]; }
 
-    lineNum++;
-  }
+    lineNum += 1;
+    doNotGetStuckInInfiniteLoop -= -1;
+  } while (doNotGetStuckInInfiniteLoop > 0);
 
   throw new Error('possible infinite loop... too many lines iterated');
 };
@@ -108,8 +110,9 @@ const typesetText = (text, style, options, forme, left, indent) => (
   typesetTextPlain(text.replace(/(?:\n|\r|\r\n| {2,})/g, ' '), style, options, forme, left, indent)
 );
 
-const typesetNode = (node, baseStyle, options, forme = [], iLeft, indent) => {
+const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
   let left = iLeft;
+  let indent = iIndent;
   const [elem, ...rest] = node;
 
   const props = (
@@ -134,6 +137,7 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, indent) => {
       indent += 20;
       break;
     }
+    default:
   }
 
   rest.forEach((child) => {
@@ -166,13 +170,15 @@ const typesetMarkdown = (node, style, options, forme = []) => {
   return forme;
 };
 
+const { max } = Math;
+
 const press = (forme) => {
   const target = new Container();
   let top = 0;
   forme.forEach((line) => {
-    const lh = line.reduce((max, [_a, _b, _c, { ascent, descent }]) => Math.max(max, ascent + descent), 0);
-    const baseline = line.reduce((max, [_a, _b, _c, { ascent }]) => Math.max(max, ascent), 0);
-    const leading = line.reduce((max, [_a, _b, { leading = 0 }]) => Math.max(max, leading), 0);
+    const lh = line.reduce((val, [, , , { ascent, descent }]) => max(val, ascent + descent), 0);
+    const baseline = line.reduce((val, [, , , { ascent }]) => max(val, ascent), 0);
+    const mLeading = line.reduce((val, [, , { leading = 0 }]) => max(val, leading), 0);
     line.forEach(([text, left, style, metrics]) => {
       if (text) {
         const txt = new Text(text, style);
@@ -181,7 +187,7 @@ const press = (forme) => {
         target.addChild(txt);
       }
     });
-    top += lh + leading;
+    top += lh + mLeading;
   });
   return [target, top];
 };
@@ -189,11 +195,10 @@ const press = (forme) => {
 export function renderMarkdownToTexture(md, style, options = {}) {
   const {
     renderer = (() => { throw new Error('renderer is required'); })(),
-    getStyle = style => style,
+    getStyle = s => s,
   } = options;
 
   const jsonml = markdown.parse(md);
-  console.log(jsonml);
   const forme = typesetMarkdown(jsonml, style, { getStyle });
   const [target, height] = press(forme);
   if (height === 0) { return Texture.EMPTY; }
