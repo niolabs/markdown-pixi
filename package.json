@@ -1,0 +1,61 @@
+{
+  "name": "markdown-pixi",
+  "version": "0.0.0",
+  "description": "A simple markdown renderer for PIXI",
+  "main": "src/index.js",
+  "scripts": {
+    "lint": "eslint ./src || true"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "markdown": "^0.5.0"
+  },
+  "devDependencies": {
+    "babel-core": "6.24.1",
+    "babel-eslint": "7.2.3",
+    "babel-preset-stage-0": "^6.24.1",
+    "eslint": "^4.9.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0"
+  },
+  "peerDependencies": {
+    "pixi.js": "^4.5.3"
+  },
+  "eslintConfig": {
+    "parser": "babel-eslint",
+    "env": {
+      "browser": true
+    },
+    "extends": "airbnb-base",
+    "rules": {
+      "brace-style": [
+        2,
+        "1tbs",
+        {
+          "allowSingleLine": true
+        }
+      ],
+      "import/prefer-default-export": 0,
+      "no-nested-ternary": 0,
+      "no-throw-literal": "off",
+      "newline-per-chained-call": [
+        "error",
+        {
+          "ignoreChainWithDepth": 4
+        }
+      ],
+      "arrow-body-style": 0
+    },
+    "settings": {
+      "import/resolver": {
+        "node": {
+          "moduleDirectory": [
+            "node_modules",
+            "src"
+          ]
+        }
+      }
+    }
+  }
+}
