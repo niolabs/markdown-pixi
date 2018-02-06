@@ -5,7 +5,7 @@ import {
   Text,
   TextMetrics,
   Texture,
-} from 'pixi.js'; // eslint-disable-line import/no-unresolved, import/extensions
+} from 'pixi.js'; // eslint-disable-line import/extensions
 
 
 import { markdown } from 'markdown';
