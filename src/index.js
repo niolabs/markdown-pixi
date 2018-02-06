@@ -55,7 +55,7 @@ function wrap(text, style, canvas = TextMetrics._canvas) {
         }
       }
 
-      text = text.substr(result.length + 1)
+      text = text.substr(result.length + 1);
 
       return [
         result,
@@ -65,20 +65,20 @@ function wrap(text, style, canvas = TextMetrics._canvas) {
         fontProperties,
         text.length === 0,
       ];
-    }
-  }
+    },
+  };
 }
 
 const nodeIsBlock = elem => (
-  elem === "para" ||
-  elem === "header" ||
-  elem === "hr" ||
-  elem === "blockquote" ||
-  elem === "code_block" ||
+  elem === 'para' ||
+  elem === 'header' ||
+  elem === 'hr' ||
+  elem === 'blockquote' ||
+  elem === 'code_block' ||
   elem === 'listitem'
 );
 
-const nodeIsInline = elem => !nodeIsBlock(elem)
+const nodeIsInline = elem => !nodeIsBlock(elem);
 
 const typesetTextPlain = (text, style, options, forme, left, indent) => {
   const lines = wrap(text, style);
@@ -101,8 +101,8 @@ const typesetTextPlain = (text, style, options, forme, left, indent) => {
     lineNum++;
   }
 
-  throw new Error('possible infinite loop... too many lines iterated')
-}
+  throw new Error('possible infinite loop... too many lines iterated');
+};
 
 const typesetText = (text, style, options, forme, left, indent) => (
   typesetTextPlain(text.replace(/(?:\n|\r|\r\n| {2,})/g, ' '), style, options, forme, left, indent)
@@ -113,23 +113,23 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, indent) => {
   const [elem, ...rest] = node;
 
   const props = (
-    typeof rest[0] === "object" && !Array.isArray(rest[0])
+    typeof rest[0] === 'object' && !Array.isArray(rest[0])
   ) ? rest.shift() : {};
 
   const style = options.getStyle(baseStyle, elem, props);
 
   switch (elem) {
-    case "blockquote": {
+    case 'blockquote': {
       left += 20;
       indent += 20;
       break;
     }
-    case "code_block": {
+    case 'code_block': {
       left += 10;
       indent += 10;
       break;
     }
-    case "listitem": {
+    case 'listitem': {
       left += 20;
       indent += 20;
       break;
@@ -139,8 +139,8 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, indent) => {
   rest.forEach((child) => {
     const typeset = Array.isArray(child) ? typesetNode
       : elem === 'code_block' ? typesetTextPlain
-      : elem === 'inlinecode' ? typesetTextPlain
-      : typesetText;
+        : elem === 'inlinecode' ? typesetTextPlain
+          : typesetText;
 
     const [nLeft, nIndent] = typeset(child, style, options, forme, left, indent);
 
@@ -153,7 +153,7 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, indent) => {
     left = iLeft;
     if (forme.length > 0 && forme[forme.length - 1][0][0] !== undefined) {
       forme.push([
-        [undefined, 0, style, { ascent: 7, descent: 0, fontSize: 7 }]
+        [undefined, 0, style, { ascent: 7, descent: 0, fontSize: 7 }],
       ]);
     }
   }
@@ -164,7 +164,7 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, indent) => {
 const typesetMarkdown = (node, style, options, forme = []) => {
   typesetNode(node, style, options, forme, 0, 0);
   return forme;
-}
+};
 
 const press = (forme) => {
   const target = new Container();
@@ -182,26 +182,26 @@ const press = (forme) => {
       }
     });
     top += lh + leading;
-  })
+  });
   return [target, top];
-}
+};
 
 export function renderMarkdownToTexture(md, style, options = {}) {
   const {
-    renderer = (() => { throw new Error('renderer is required') })(),
+    renderer = (() => { throw new Error('renderer is required'); })(),
     getStyle = style => style,
   } = options;
 
-  const jsonml = markdown.parse(md)
-  console.log(jsonml)
+  const jsonml = markdown.parse(md);
+  console.log(jsonml);
   const forme = typesetMarkdown(jsonml, style, { getStyle });
   const [target, height] = press(forme);
   if (height === 0) { return Texture.EMPTY; }
   const texture = RenderTexture.create(
     style.wordWrapWidth, height,
     SCALE_MODE.LINEAR,
-    renderer.resolution
+    renderer.resolution,
   );
   renderer.render(target, texture);
   return texture;
-};
+}
