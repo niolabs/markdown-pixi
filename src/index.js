@@ -1,6 +1,5 @@
 import {
   Container,
-  RenderTexture,
   SCALE_MODES,
   Text,
   TextMetrics,
@@ -196,17 +195,18 @@ export function renderMarkdownToTexture(md, style, options = {}) {
   const {
     renderer = (() => { throw new Error('renderer is required'); })(),
     getStyle = s => s,
+    resolution = renderer.resolution,
+    scaleMode = SCALE_MODES.LINEAR,
   } = options;
 
   const jsonml = markdown.parse(md);
   const forme = typesetMarkdown(jsonml, style, { getStyle });
   const [target, height] = press(forme);
-  if (height === 0) { return Texture.EMPTY; }
-  const texture = RenderTexture.create(
-    style.wordWrapWidth, height,
-    SCALE_MODES.LINEAR,
-    renderer.resolution,
-  );
-  renderer.render(target, texture);
-  return texture;
+
+  return (height === 0) ? Texture.EMPTY
+    : renderer.generateTexture(target, scaleMode, resolution);
 }
+
+export const createMarkdownProvider = renderer => (md, style, options = {}) => (
+  renderMarkdownToTexture(md, style, Object.assign({ renderer }, options))
+);
