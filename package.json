@@ -1,5 +1,5 @@
 {
-  "name": "markdown-pixi",
+  "name": "@nio/markdown-pixi",
   "version": "0.0.0",
   "description": "A simple markdown renderer for PIXI",
   "main": "dist/index.js",
