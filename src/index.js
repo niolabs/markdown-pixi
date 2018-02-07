@@ -19,8 +19,10 @@ export function renderMarkdownToTexture(md, style, options = {}) {
   const forme = typesetMarkdown(jsonml, style, { getStyle });
   const [target, height] = press(forme);
 
-  return (height === 0) ? Texture.EMPTY
-    : renderer.generateTexture(target, scaleMode, resolution);
+  if (height === 0) { return Texture.EMPTY; }
+  const texture = PIXI.RenderTexture.create(style.wordWrapWidth, height, scaleMode, resolution);
+  renderer.render(target, texture);
+  return texture;
 }
 
 export const createMarkdownProvider = renderer => (md, style, options = {}) => (
