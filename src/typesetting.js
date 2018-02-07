@@ -28,7 +28,7 @@ const typesetTextPlain = (text, style, options, forme, left, indent) => {
     if (end) { return [left, (lineNum === 0 ? indent : left) + Math.round(width)]; }
 
     lineNum += 1;
-    doNotGetStuckInInfiniteLoop -= -1;
+    doNotGetStuckInInfiniteLoop -= 1;
   } while (doNotGetStuckInInfiniteLoop > 0);
 
   throw new Error('possible infinite loop... too many lines iterated');
