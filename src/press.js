@@ -17,7 +17,6 @@ export const press = (forme) => {
       if (text) {
         const txt = new Text(text, style);
         txt.y = Math.round(top + (baseline - ascent));
-        console.log(style.wordWrapWidth)
         switch (style.align) {
           case "right": {
             txt.x = Math.round((style.wordWrapWidth - lineWidth) + left);
