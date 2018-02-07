@@ -15,7 +15,7 @@ const typesetTextPlain = (text, style, options, forme, left, indent) => {
   let doNotGetStuckInInfiniteLoop = 100000;
   do {
     const sLeft = lineNum === 0 ? indent : left;
-    const allowLonger = lineNum === 0 && indent === left;
+    const allowLonger = lineNum !== 0 || indent === left;
     const [line, width, , , metrics, end] = lines.next(sLeft, allowLonger);
 
     if (line.length) {
