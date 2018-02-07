@@ -22,7 +22,7 @@ const typesetTextPlain = (text, style, options, forme, left, indent) => {
       const appendPrevious = (lineNum === 0 && !(indent === left));
       const formeLine = (appendPrevious ? forme : (forme.push([]), forme))[forme.length - 1];
       const tLeft = lineNum === 0 ? indent : left;
-      formeLine.push([line, tLeft, style, metrics]);
+      formeLine.push([line, tLeft, width, style, metrics]);
     }
 
     if (end) { return [left, (lineNum === 0 ? indent : left) + Math.round(width)]; }
@@ -85,7 +85,7 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
     left = iLeft;
     if (forme.length > 0 && forme[forme.length - 1][0][0] !== undefined) {
       forme.push([
-        [undefined, 0, style, { ascent: 7, descent: 0, fontSize: 7 }],
+        [undefined, 0, 0, style, { ascent: 7, descent: 0, fontSize: 7 }],
       ]);
     }
   }
