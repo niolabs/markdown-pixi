@@ -1,6 +1,7 @@
 import {
   SCALE_MODES,
   Texture,
+  RenderTexture,
 } from 'pixi.js'; // eslint-disable-line import/extensions
 
 import { markdown } from 'markdown';
@@ -20,7 +21,7 @@ export function renderMarkdownToTexture(md, style, options = {}) {
   const [target, height] = press(forme);
 
   if (height === 0) { return Texture.EMPTY; }
-  const texture = PIXI.RenderTexture.create(style.wordWrapWidth, height, scaleMode, resolution);
+  const texture = RenderTexture.create(style.wordWrapWidth, height, scaleMode, resolution);
   renderer.render(target, texture);
   return texture;
 }

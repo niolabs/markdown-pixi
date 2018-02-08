@@ -13,20 +13,20 @@ export const press = (forme) => {
     const baseline = line.reduce((val, [, , , , { ascent }]) => max(val, ascent), 0);
     const mLeading = line.reduce((val, [, , , { leading = 0 }]) => max(val, leading), 0);
     const lineWidth = line.reduce((val, [, , width]) => val + width, 0);
-    line.forEach(([text, left, width, style, { ascent }]) => {
+    line.forEach(([text, left, , style, { ascent }]) => {
       if (text) {
         const txt = new Text(text, style);
         txt.y = Math.round(top + (baseline - ascent));
         switch (style.align) {
-          case "right": {
+          case 'right': {
             txt.x = Math.round((style.wordWrapWidth - lineWidth) + left);
             break;
           }
-          case "center": {
+          case 'center': {
             txt.x = Math.round(((style.wordWrapWidth - lineWidth) / 2) + left);
             break;
           }
-          case "left":
+          case 'left':
           default: {
             txt.x = Math.round(left);
           }
