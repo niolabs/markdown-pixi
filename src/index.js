@@ -34,7 +34,12 @@ export function renderMarkdownToTexture(md, style = new TextStyle(), options = {
   const [target, height] = press(forme);
 
   if (height === 0) { return Texture.EMPTY; }
-  const texture = RenderTexture.create(style.wordWrapWidth, height, scaleMode, resolution);
+  const texture = RenderTexture.create(
+    style.wordWrapWidth,
+    height,
+    scaleMode,
+    resolution,
+  );
   renderer.render(target, texture);
   target.destroy({ children: true });
   return texture;
