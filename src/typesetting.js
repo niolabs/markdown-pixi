@@ -58,6 +58,8 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
 
   const style = options.getStyle(baseStyle, elem, props);
 
+  if (nodeIsBlock(elem)) { forme.push([]) }
+
   switch (elem) {
     case 'blockquote': {
       left += 20;
@@ -79,7 +81,6 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
       if (image === undefined) break;
 
       const { texture, alignment = 1 } = image;
-
       forme[forme.length - 1].push([
         imageType,
         texture,
