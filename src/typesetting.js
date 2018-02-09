@@ -1,5 +1,7 @@
-import { wrap } from './wrap';
+import smartypants from 'smartypants';
+import { decodeHTML } from 'entities';
 
+import { wrap } from './wrap';
 import { textType, imageType } from './typesetting-types';
 
 const nodeIsBlock = elem => (
@@ -37,9 +39,13 @@ const typesetTextPlain = (text, style, options, forme, left, indent) => {
 };
 
 const whitespaceRegex = /(?:\n|\r|\r\n| {2,})/g;
-const typesetText = (text, style, options, forme, left, indent) => (
-  typesetTextPlain(text.replace(whitespaceRegex, ' '), style, options, forme, left, indent)
-);
+const typesetText = (text, style, options, forme, left, indent) => {
+  let result = text;
+  result = options.collapseWhitespace ? result.replace(whitespaceRegex, ' ') : result;
+  result = options.smartypants ? smartypants(result, 'qDe') : result;
+  result = options.decodeEntities ? decodeHTML(result) : result;
+  return typesetTextPlain(result, style, options, forme, left, indent);
+};
 
 const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
   let left = iLeft;

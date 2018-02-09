@@ -15,10 +15,21 @@ export function renderMarkdownToTexture(md, style, options = {}) {
     resolution = renderer.resolution,
     scaleMode = SCALE_MODES.LINEAR,
     images = {},
+
+    // Typographical Options
+    collapseWhitespace = true,
+    smartypants = true,
+    decodeEntities = true,
   } = options;
 
   const jsonml = markdown.parse(md);
-  const forme = typesetMarkdown(jsonml, style, { getStyle, images });
+  const forme = typesetMarkdown(jsonml, style, {
+    getStyle,
+    images,
+    collapseWhitespace,
+    smartypants,
+    decodeEntities,
+  });
   const [target, height] = press(forme);
 
   if (height === 0) { return Texture.EMPTY; }

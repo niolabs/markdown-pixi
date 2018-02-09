@@ -12,7 +12,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "markdown": "^0.5.0"
+    "entities": "^1.1.1",
+    "markdown": "^0.5.0",
+    "smartypants": "0.0.5"
   },
   "devDependencies": {
     "babel-core": "6.24.1",
