@@ -14,10 +14,11 @@ export function renderMarkdownToTexture(md, style, options = {}) {
     getStyle = s => s,
     resolution = renderer.resolution,
     scaleMode = SCALE_MODES.LINEAR,
+    images = {},
   } = options;
 
   const jsonml = markdown.parse(md);
-  const forme = typesetMarkdown(jsonml, style, { getStyle });
+  const forme = typesetMarkdown(jsonml, style, { getStyle, images });
   const [target, height] = press(forme);
 
   if (height === 0) { return Texture.EMPTY; }

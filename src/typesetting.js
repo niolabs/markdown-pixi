@@ -1,5 +1,7 @@
 import { wrap } from './wrap';
 
+import { textType, imageType } from './typesetting-types';
+
 const nodeIsBlock = elem => (
   elem === 'para' ||
   elem === 'header' ||
@@ -22,7 +24,7 @@ const typesetTextPlain = (text, style, options, forme, left, indent) => {
       const appendPrevious = (lineNum === 0 && !(indent === left));
       const formeLine = (appendPrevious ? forme : (forme.push([]), forme))[forme.length - 1];
       const tLeft = lineNum === 0 ? indent : left;
-      formeLine.push([line, tLeft, width, style, metrics]);
+      formeLine.push([textType, line, tLeft, width, style, metrics]);
     }
 
     if (end) { return [left, (lineNum === 0 ? indent : left) + Math.round(width)]; }
@@ -34,8 +36,9 @@ const typesetTextPlain = (text, style, options, forme, left, indent) => {
   throw new Error('possible infinite loop... too many lines iterated');
 };
 
+const whitespaceRegex = /(?:\n|\r|\r\n| {2,})/g;
 const typesetText = (text, style, options, forme, left, indent) => (
-  typesetTextPlain(text.replace(/(?:\n|\r|\r\n| {2,})/g, ' '), style, options, forme, left, indent)
+  typesetTextPlain(text.replace(whitespaceRegex, ' '), style, options, forme, left, indent)
 );
 
 const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
@@ -65,6 +68,27 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
       indent += 20;
       break;
     }
+    case 'img_ref': {
+      const image = options.images[props.ref];
+      if (image === undefined) break;
+
+      const { texture, alignment = 1 } = image;
+
+      forme[forme.length - 1].push([
+        imageType,
+        texture,
+        indent,
+        texture.width,
+        style,
+        {
+          ascent: texture.height * alignment,
+          descent: texture.height * (1 - alignment),
+          fontSize: texture.height,
+        },
+      ]);
+      indent += texture.width;
+      break;
+    }
     default:
   }
 
@@ -85,7 +109,7 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
     left = iLeft;
     if (forme.length > 0 && forme[forme.length - 1][0][0] !== undefined) {
       forme.push([
-        [undefined, 0, 0, style, { ascent: 7, descent: 0, fontSize: 7 }],
+        [undefined, undefined, 0, 0, style, { ascent: 7, descent: 0, fontSize: 7 }],
       ]);
     }
   }
