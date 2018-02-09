@@ -1,6 +1,7 @@
 import {
   SCALE_MODES,
   Texture,
+  TextStyle,
   RenderTexture,
 } from 'pixi.js'; // eslint-disable-line import/extensions
 
@@ -8,7 +9,7 @@ import { markdown } from 'markdown';
 import { typesetMarkdown } from './typesetting';
 import { press } from './press';
 
-export function renderMarkdownToTexture(md, style, options = {}) {
+export function renderMarkdownToTexture(md, style = new TextStyle(), options = {}) {
   const {
     renderer = (() => { throw new Error('renderer is required'); })(),
     getStyle = s => s,
