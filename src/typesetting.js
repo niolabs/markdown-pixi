@@ -58,7 +58,7 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
 
   const style = options.getStyle(baseStyle, elem, props);
 
-  if (nodeIsBlock(elem)) { forme.push([]) }
+  if (nodeIsBlock(elem)) { forme.push([]); }
 
   switch (elem) {
     case 'blockquote': {
