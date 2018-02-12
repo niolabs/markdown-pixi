@@ -9,6 +9,8 @@ import { markdown } from 'markdown';
 import { typesetMarkdown } from './typesetting';
 import { press } from './press';
 
+export { typesetMarkdown, press };
+
 export function renderMarkdownToTexture(md, style = new TextStyle(), options = {}) {
   const {
     renderer = (() => { throw new Error('renderer is required'); })(),

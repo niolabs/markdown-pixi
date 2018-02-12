@@ -2,7 +2,7 @@ import smartypants from 'smartypants';
 import { decodeHTML } from 'entities';
 
 import { wrap } from './wrap';
-import { textType, imageType } from './typesetting-types';
+import { textType, imageType, spacerType } from './typesetting-types';
 
 const nodeIsBlock = elem => (
   elem === 'para' ||
@@ -23,7 +23,7 @@ const typesetTextPlain = (text, style, options, forme, left, indent) => {
     const [line, width, , , metrics, end] = lines.next(sLeft, allowLonger);
 
     if (line.length) {
-      const appendPrevious = (lineNum === 0 && !(indent === left));
+      const appendPrevious = (lineNum === 0) || (indent !== left);
       const formeLine = (appendPrevious ? forme : (forme.push([]), forme))[forme.length - 1];
       const tLeft = lineNum === 0 ? indent : left;
       formeLine.push([textType, line, tLeft, width, style, metrics]);
@@ -116,7 +116,7 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
     left = iLeft;
     if (forme.length > 0 && forme[forme.length - 1][0][0] !== undefined) {
       forme.push([
-        [undefined, undefined, 0, 0, style, { ascent: 7, descent: 0, fontSize: 7 }],
+        [spacerType, undefined, 0, 0, style, { ascent: 7, descent: 0, fontSize: 7 }],
       ]);
     }
   }

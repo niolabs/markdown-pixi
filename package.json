@@ -5,6 +5,10 @@
   "main": "dist/index.js",
   "module": "src/index.js",
   "scripts": {
+    "pretest": "npm run build",
+    "precoverage": "rimraf coverage",
+    "coverage": "npm run test -- -c dist/index.js -s -h",
+    "test": "floss -p test",
     "lint": "eslint ./src || true",
     "prebuild": "rimraf dist/",
     "build": "webpack"
@@ -24,10 +28,12 @@
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.0",
+    "electron": "^1.8.2",
     "eslint": "^4.9.0",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-loader": "^1.9.0",
     "eslint-plugin-import": "^2.8.0",
+    "floss": "^2.1.4",
     "pixi.js": "^4.7.0",
     "rimraf": "^2.6.2",
     "webpack": "^3.11.0",
