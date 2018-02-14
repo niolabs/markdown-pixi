@@ -19,8 +19,8 @@ describe('typesetter()', () => {
       decodeEntities: true,
     });
 
-    expect(result.length).to.equal(2);
-    const [ text, spacer ] = result;
+    expect(result.length).to.equal(1);
+    const [ text ] = result;
 
     // Text
     {
@@ -29,17 +29,6 @@ describe('typesetter()', () => {
       expect(type.toString()).to.equal('Symbol(typesetting.text)');
       expect(content).to.equal('this is some plaintext');
       expect(style).to.equal(baseStyle);
-    }
-
-
-    // Spacer
-    {
-      expect(spacer.length).to.equal(1);
-      const [[type, content, left, width, style, metrics]] = spacer;
-      expect(type.toString()).to.equal('Symbol(typesetting.spacer)');
-      expect(content).to.equal(undefined);
-      expect(style).to.equal(baseStyle);
-      expect(metrics).to.deep.equal({ ascent: 7, descent: 0, fontSize: 7 });
     }
   });
 
@@ -59,8 +48,8 @@ describe('typesetter()', () => {
       decodeEntities: true,
     });
 
-    expect(result.length).to.equal(3);
-    const [ line1, line2, spacer ] = result;
+    expect(result.length).to.equal(2);
+    const [ line1, line2 ] = result;
 
     // Text
     {
@@ -78,16 +67,6 @@ describe('typesetter()', () => {
       expect(type.toString()).to.equal('Symbol(typesetting.text)');
       expect(content).to.equal('plaintext');
       expect(style).to.equal(baseStyle);
-    }
-
-    // Spacer
-    {
-      expect(spacer.length).to.equal(1);
-      const [[type, content, left, width, style, metrics]] = spacer;
-      expect(type.toString()).to.equal('Symbol(typesetting.spacer)');
-      expect(content).to.equal(undefined);
-      expect(style).to.equal(baseStyle);
-      expect(metrics).to.deep.equal({ ascent: 7, descent: 0, fontSize: 7 });
     }
   });
 });
