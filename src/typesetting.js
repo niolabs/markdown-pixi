@@ -23,7 +23,7 @@ const typesetTextPlain = (text, style, options, forme, left, indent) => {
     const [line, width, , , metrics, end] = lines.next(sLeft, allowLonger);
 
     if (line.length) {
-      const appendPrevious = (lineNum === 0) || (indent !== left);
+      const appendPrevious = lineNum === 0;
       const formeLine = (appendPrevious ? forme : (forme.push([]), forme))[forme.length - 1];
       const tLeft = lineNum === 0 ? indent : left;
       formeLine.push([textType, line, tLeft, width, style, metrics]);
