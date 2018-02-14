@@ -126,5 +126,7 @@ const typesetNode = (node, baseStyle, options, forme = [], iLeft, iIndent) => {
 
 export const typesetMarkdown = (node, style, options, forme = []) => {
   typesetNode(node, style, options, forme, 0, 0);
+  // Remove trailing space if its there
+  if (forme[forme.length - 1][0][0] === spacerType) { forme.pop(); }
   return forme;
 };
