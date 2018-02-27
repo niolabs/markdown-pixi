@@ -3,7 +3,6 @@
   "version": "0.1.1",
   "description": "A simple markdown renderer for PIXI",
   "main": "dist/index.js",
-  "module": "src/index.js",
   "scripts": {
     "pretest": "npm run build",
     "precoverage": "rimraf coverage",
